@@ -131,6 +131,8 @@ const TransactionModalForm: React.FC = () => {
       const defaults = defaultPriceAndFee(asset);
       setPrice(defaults.price);
       setFee(defaults.fee);
+      // Spot (long) defaults to Buy; short opens with Sell, matching initialForm.
+      setSide((asset.direction || 'long') === 'short' ? 'sell' : 'buy');
     }
   };
 
