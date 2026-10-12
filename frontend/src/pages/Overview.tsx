@@ -156,13 +156,20 @@ const ConsistencyCard: React.FC<{
   );
 };
 
+const NW_RANGES = ['1M', '3M', '1Y', 'ALL'] as const;
+type NetWorthRange = (typeof NW_RANGES)[number];
+const NW_RANGE_DAYS: Record<NetWorthRange, number | null> = { '1M': 30, '3M': 90, '1Y': 365, ALL: null };
+
 export const Overview: React.FC = () => {
   const { currency, setPage, openModal } = useStore();
   const { data: portfolios = [], isLoading: loadingPorts } = usePortfolios();
   const { data: assets = [], isLoading: loadingAssets } = useAssets();
   const { data: liabilities = [] } = useLiabilities();
   const { data: transactions = [] } = useTransactions();
-  const { summary, history } = useNetWorth(365);
+  // Full history (no `days`) so the chart can reach back to the first snapshot;
+  // the range selector below filters it client-side.
+  const { summary, history } = useNetWorth();
+  const [nwRange, setNwRange] = React.useState<NetWorthRange>('ALL');
   const { data: config } = useAuthConfig();
   const { t, language } = useTranslation();
   const themeColors = useThemePalette();
@@ -278,9 +285,16 @@ export const Overview: React.FC = () => {
   let nwAreaPath = '';
   let nwDotX = 0;
   let nwDotY = 0;
-  let xLabels: string[] = [];
+  const xLabels: string[] = [];
 
-  let chartHistoryPoints: NetWorthHistoryItem[] = [...historyData].slice(-60);
+  let chartHistoryPoints: NetWorthHistoryItem[] = historyData;
+  const rangeDays = NW_RANGE_DAYS[nwRange];
+  if (rangeDays !== null) {
+    const cutoffStr = new Date(now - rangeDays * 86400000).toISOString().slice(0, 10);
+    const inRange = historyData.filter((p) => p.date >= cutoffStr);
+    // A sparse range still needs two points to draw a line.
+    chartHistoryPoints = inRange.length >= 2 ? inRange : historyData.slice(-2);
+  }
   if (chartHistoryPoints.length === 0) {
     const todayStr = new Date().toISOString().slice(0, 10);
     const prevDate = new Date(now - 30 * 86400000).toISOString().slice(0, 10);
@@ -313,10 +327,18 @@ export const Overview: React.FC = () => {
     const paddingBottom = 10;
     const paddingTop = 12;
 
+    // Snapshots are only recorded on days the app is opened, so place points by
+    // date rather than by index — otherwise long gaps collapse to one step.
+    const times = chartHistoryPoints.map((h) => new Date(h.date + 'T00:00:00').getTime());
+    const firstTime = times[0];
+    const span = times[times.length - 1] - firstTime;
+
     const points = chartHistoryPoints.map((h, i) => {
       const pointFx = h.fxRate || fx;
       const val = isThb ? Number(h.netWorthThb) : Number(h.netWorthThb) / pointFx;
-      const x = i * (width / (chartHistoryPoints.length - 1));
+      const x = span > 0
+        ? ((times[i] - firstTime) / span) * width
+        : i * (width / (chartHistoryPoints.length - 1));
       const y = height - paddingBottom - ((val - lo) / (hi - lo)) * (height - paddingBottom - paddingTop);
       return [x, y];
     });
@@ -326,19 +348,16 @@ export const Overview: React.FC = () => {
     nwDotX = points[points.length - 1][0];
     nwDotY = points[points.length - 1][1];
 
-    if (chartHistoryPoints.length <= 5) {
-      xLabels = chartHistoryPoints.map((p) => {
-        const d = new Date(p.date + 'T00:00:00');
-        return d.toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { month: 'short', year: '2-digit' });
-      });
-    } else {
-      for (let i = 0; i < 5; i++) {
-        const point = chartHistoryPoints[Math.round((i * (chartHistoryPoints.length - 1)) / 4)];
-        if (point) {
-          const d = new Date(point.date + 'T00:00:00');
-          xLabels.push(d.toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { month: 'short', year: '2-digit' }));
-        }
-      }
+    // Labels are evenly spaced in time to match the date-based x axis. Short
+    // spans show day + month so the labels don't all repeat the same month.
+    const spanDays = Math.round(span / 86400000);
+    const labelFormat: Intl.DateTimeFormatOptions = spanDays <= 62
+      ? { day: 'numeric', month: 'short' }
+      : { month: 'short', year: '2-digit' };
+    const labelCount = Math.min(5, spanDays + 1);
+    for (let i = 0; i < labelCount; i++) {
+      const labelTime = labelCount === 1 ? firstTime : firstTime + (i * span) / (labelCount - 1);
+      xLabels.push(new Date(labelTime).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', labelFormat));
     }
   }
 
@@ -767,6 +786,19 @@ export const Overview: React.FC = () => {
             >
               {MoMPct >= 0 ? '▲' : '▼'} {Math.abs(MoMPct).toFixed(1)}%
             </span>
+          </div>
+          <div className="flex gap-[6px] mb-3 select-none">
+            {NW_RANGES.map((r) => (
+              <button
+                key={r}
+                onClick={() => setNwRange(r)}
+                className={`px-[14px] py-[5px] rounded-full cursor-pointer text-[12.5px] font-bold border-none transition-colors duration-150 ${
+                  nwRange === r ? 'bg-dark text-surface shadow-sm' : 'bg-chipBg text-muted hover:bg-softH'
+                }`}
+              >
+                {r === 'ALL' ? t('overview.rangeAll') : r}
+              </button>
+            ))}
           </div>
           <svg viewBox="0 0 1100 170" className="w-full max-h-[170px] select-none block overflow-visible">
             <defs>
