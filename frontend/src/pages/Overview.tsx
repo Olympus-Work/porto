@@ -159,6 +159,10 @@ const ConsistencyCard: React.FC<{
 const NW_RANGES = ['1M', '3M', '1Y', 'ALL'] as const;
 type NetWorthRange = (typeof NW_RANGES)[number];
 const NW_RANGE_DAYS: Record<NetWorthRange, number | null> = { '1M': 30, '3M': 90, '1Y': 365, ALL: null };
+// Local-time YYYY-MM-DD — snapshot dates are local, so a UTC-based toISOString()
+// cutoff would include/exclude boundary points a day early/late in UTC+7.
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export const Overview: React.FC = () => {
   const { currency, setPage, openModal } = useStore();
@@ -265,7 +269,7 @@ export const Overview: React.FC = () => {
   const historyData = history.data || [];
   if (historyData.length >= 2) {
     const dayMs = 86400000;
-    const cutoffDateStr = new Date(now - 28 * dayMs).toISOString().slice(0, 10);
+    const cutoffDateStr = ymd(new Date(now - 28 * dayMs));
     let oldPoint = historyData[0];
     for (const p of historyData) {
       if (p.date <= cutoffDateStr) {
@@ -290,20 +294,20 @@ export const Overview: React.FC = () => {
   let chartHistoryPoints: NetWorthHistoryItem[] = historyData;
   const rangeDays = NW_RANGE_DAYS[nwRange];
   if (rangeDays !== null) {
-    const cutoffStr = new Date(now - rangeDays * 86400000).toISOString().slice(0, 10);
+    const cutoffStr = ymd(new Date(now - rangeDays * 86400000));
     const inRange = historyData.filter((p) => p.date >= cutoffStr);
     // A sparse range still needs two points to draw a line.
     chartHistoryPoints = inRange.length >= 2 ? inRange : historyData.slice(-2);
   }
   if (chartHistoryPoints.length === 0) {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const prevDate = new Date(now - 30 * 86400000).toISOString().slice(0, 10);
+    const todayStr = ymd(new Date());
+    const prevDate = ymd(new Date(now - 30 * 86400000));
     chartHistoryPoints = [
       { id: 'placeholder-1', date: prevDate, netWorthThb: 0, totalAssetsThb: 0, totalLiabilitiesThb: 0, fxRate: fx },
       { id: 'placeholder-2', date: todayStr, netWorthThb: netWorth, totalAssetsThb: totalAssets, totalLiabilitiesThb: totalLiabilities, fxRate: fx }
     ];
   } else if (chartHistoryPoints.length === 1) {
-    const prevDate = new Date(now - 30 * 86400000).toISOString().slice(0, 10);
+    const prevDate = ymd(new Date(now - 30 * 86400000));
     const onlyPoint = chartHistoryPoints[0];
     chartHistoryPoints = [
       { id: 'placeholder-1', date: prevDate, netWorthThb: 0, totalAssetsThb: 0, totalLiabilitiesThb: 0, fxRate: onlyPoint.fxRate || fx },
@@ -601,8 +605,6 @@ export const Overview: React.FC = () => {
     const weekCount = isMobile ? 26 : 53;
     const locale = language === 'th' ? 'th-TH' : 'en-US';
     const monthShort = (d: Date) => d.toLocaleDateString(locale, { month: 'short' });
-    const ymd = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     const txPerDay: Record<string, number> = {};
     for (const tx of transactions) {
@@ -792,6 +794,7 @@ export const Overview: React.FC = () => {
               <button
                 key={r}
                 onClick={() => setNwRange(r)}
+                aria-pressed={nwRange === r}
                 className={`px-[14px] py-[5px] rounded-full cursor-pointer text-[12.5px] font-bold border-none transition-colors duration-150 ${
                   nwRange === r ? 'bg-dark text-surface shadow-sm' : 'bg-chipBg text-muted hover:bg-softH'
                 }`}
