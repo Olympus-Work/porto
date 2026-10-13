@@ -299,23 +299,11 @@ export const Overview: React.FC = () => {
     // A sparse range still needs two points to draw a line.
     chartHistoryPoints = inRange.length >= 2 ? inRange : historyData.slice(-2);
   }
-  if (chartHistoryPoints.length === 0) {
-    const todayStr = ymd(new Date());
-    const prevDate = ymd(new Date(now - 30 * 86400000));
-    chartHistoryPoints = [
-      { id: 'placeholder-1', date: prevDate, netWorthThb: 0, totalAssetsThb: 0, totalLiabilitiesThb: 0, fxRate: fx },
-      { id: 'placeholder-2', date: todayStr, netWorthThb: netWorth, totalAssetsThb: totalAssets, totalLiabilitiesThb: totalLiabilities, fxRate: fx }
-    ];
-  } else if (chartHistoryPoints.length === 1) {
-    const prevDate = ymd(new Date(now - 30 * 86400000));
-    const onlyPoint = chartHistoryPoints[0];
-    chartHistoryPoints = [
-      { id: 'placeholder-1', date: prevDate, netWorthThb: 0, totalAssetsThb: 0, totalLiabilitiesThb: 0, fxRate: onlyPoint.fxRate || fx },
-      onlyPoint
-    ];
-  }
+  // With fewer than two snapshots there is no line to draw; the card shows a
+  // "not enough data" note instead of padding with a fake zero point.
+  const hasChart = chartHistoryPoints.length >= 2;
 
-  if (chartHistoryPoints.length >= 2) {
+  if (hasChart) {
     const values = chartHistoryPoints.map((h) => {
       const pointFx = h.fxRate || fx;
       return isThb ? Number(h.netWorthThb) : Number(h.netWorthThb) / pointFx;
@@ -779,16 +767,21 @@ export const Overview: React.FC = () => {
       </div>
 
       {/* 3. Net Worth Area Chart */}
-      {chartHistoryPoints.length >= 2 && (
-        <div className="bg-white rounded-[20px] p-[20px_24px] border border-inputBorder/20 shadow-sm mt-6 w-full">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[14px] font-bold text-dark">{t('overview.netWorthGrowth')}</h3>
+      <div className="bg-white rounded-[20px] p-[20px_24px] border border-inputBorder/20 shadow-sm mt-6 w-full">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[14px] font-bold text-dark">{t('overview.netWorthGrowth')}</h3>
+          {hasChart && (
             <span
               className={`text-sm font-bold ${MoMChangeUp ? 'text-positive-text' : 'text-negative-text'}`}
             >
               {MoMPct >= 0 ? '▲' : '▼'} {Math.abs(MoMPct).toFixed(1)}%
             </span>
-          </div>
+          )}
+        </div>
+        {!hasChart ? (
+          <p className="text-[13px] text-muted py-8 text-center">{t('overview.chartNotEnoughData')}</p>
+        ) : (
+        <>
           <div className="flex gap-[6px] mb-3 select-none">
             {NW_RANGES.map((r) => (
               <button
@@ -823,8 +816,9 @@ export const Overview: React.FC = () => {
               <span key={idx}>{label}</span>
             ))}
           </div>
-        </div>
-      )}
+        </>
+        )}
+      </div>
 
       {/* Logging consistency heatmap */}
       {transactions.length > 0 && (
