@@ -175,7 +175,7 @@ export class NetWorthService {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - days);
       query.andWhere('history.date >= :cutoff', {
-        cutoff: cutoff.toISOString().slice(0, 10),
+        cutoff: bangkokDateKey(cutoff),
       });
     }
 
