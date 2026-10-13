@@ -296,11 +296,17 @@ export const Overview: React.FC = () => {
   if (rangeDays !== null) {
     const cutoffStr = ymd(new Date(now - rangeDays * 86400000));
     const inRange = historyData.filter((p) => p.date >= cutoffStr);
-    // A sparse range still needs two points to draw a line.
-    chartHistoryPoints = inRange.length >= 2 ? inRange : historyData.slice(-2);
+    const anchor = [...historyData].reverse().find((p) => p.date < cutoffStr);
+    // Net worth carries forward from the last snapshot before the range, so the line starts at the range edge.
+    if (anchor && (inRange.length === 0 || inRange[0].date > cutoffStr)) {
+      chartHistoryPoints = [{ ...anchor, date: cutoffStr }, ...inRange];
+    } else {
+      chartHistoryPoints = inRange;
+    }
   }
-  // With fewer than two snapshots there is no line to draw; the card shows a
-  // "not enough data" note instead of padding with a fake zero point.
+  // Enough snapshots overall → offer the range toggles; enough in the selected
+  // range → draw the chart. Otherwise the card shows a "not enough data" note.
+  const hasHistory = historyData.length >= 2;
   const hasChart = chartHistoryPoints.length >= 2;
 
   if (hasChart) {
@@ -770,7 +776,7 @@ export const Overview: React.FC = () => {
       <div className="bg-white rounded-[20px] p-[20px_24px] border border-inputBorder/20 shadow-sm mt-6 w-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[14px] font-bold text-dark">{t('overview.netWorthGrowth')}</h3>
-          {hasChart && (
+          {hasHistory && (
             <span
               className={`text-sm font-bold ${MoMChangeUp ? 'text-positive-text' : 'text-negative-text'}`}
             >
@@ -778,7 +784,7 @@ export const Overview: React.FC = () => {
             </span>
           )}
         </div>
-        {history.isLoading ? null : !hasChart ? (
+        {history.isLoading ? null : !hasHistory ? (
           <p className="text-[13px] text-muted py-8 text-center">{t('overview.chartNotEnoughData')}</p>
         ) : (
         <>
@@ -796,6 +802,8 @@ export const Overview: React.FC = () => {
               </button>
             ))}
           </div>
+          {hasChart ? (
+          <>
           <svg viewBox="0 0 1100 170" className="w-full max-h-[170px] select-none block overflow-visible">
             <defs>
               <linearGradient id="nw-area" x1="0" y1="0" x2="0" y2="1">
@@ -816,6 +824,10 @@ export const Overview: React.FC = () => {
               <span key={idx}>{label}</span>
             ))}
           </div>
+          </>
+          ) : (
+            <p className="text-[13px] text-muted py-8 text-center">{t('overview.chartNotEnoughDataRange')}</p>
+          )}
         </>
         )}
       </div>
