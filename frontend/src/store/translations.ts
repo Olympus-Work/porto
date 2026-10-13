@@ -105,6 +105,7 @@ export const translations: TranslationTree = {
     debtNoteBad: { th: 'สูง — ควรเร่งลดหนี้', en: 'High — reduce debt recommended' },
     monthAbbr: { th: 'เดือนนี้', en: 'this month' },
     chartNotEnoughData: { th: 'ข้อมูลยังไม่พอแสดงกราฟ — ระบบจะบันทึกมูลค่าสุทธิให้ทุกวัน', en: 'Not enough data yet — your net worth is recorded daily.' },
+    chartNotEnoughDataRange: { th: 'ช่วงเวลานี้ยังมีข้อมูลไม่พอ — ลองเลือกช่วงที่ยาวขึ้น', en: 'Not enough data in this range — try a longer one.' },
     itemsCount: { th: 'รายการ', en: 'items' },
     portsCount: { th: 'พอร์ต', en: 'portfolios' },
     loadingOverview: { th: 'กำลังโหลดข้อมูลภาพรวม…', en: 'Loading overview data...' },
