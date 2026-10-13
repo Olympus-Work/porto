@@ -296,7 +296,7 @@ export const Overview: React.FC = () => {
   if (rangeDays !== null) {
     const cutoffStr = ymd(new Date(now - rangeDays * 86400000));
     const inRange = historyData.filter((p) => p.date >= cutoffStr);
-    const anchor = [...historyData].reverse().find((p) => p.date < cutoffStr);
+    const anchor = historyData.findLast((p) => p.date < cutoffStr);
     // Net worth carries forward from the last snapshot before the range, so the line starts at the range edge.
     if (anchor && (inRange.length === 0 || inRange[0].date > cutoffStr)) {
       chartHistoryPoints = [{ ...anchor, date: cutoffStr }, ...inRange];
