@@ -778,7 +778,7 @@ export const Overview: React.FC = () => {
             </span>
           )}
         </div>
-        {!hasChart ? (
+        {history.isLoading ? null : !hasChart ? (
           <p className="text-[13px] text-muted py-8 text-center">{t('overview.chartNotEnoughData')}</p>
         ) : (
         <>
