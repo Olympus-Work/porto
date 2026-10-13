@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NetWorthService } from './net-worth.service';
+import { NetWorthService, bangkokDateKey } from './net-worth.service';
 import { Asset } from '../assets/entities/asset.entity';
 import { Liability } from '../liabilities/entities/liability.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
@@ -139,5 +139,15 @@ describe('NetWorthService', () => {
       const result = await service.recordSnapshot('user-1');
       expect(result).toEqual(mockNetWorthHistory);
     });
+  });
+});
+
+describe('bangkokDateKey', () => {
+  it('returns the previous day before Bangkok midnight', () => {
+    expect(bangkokDateKey(new Date('2026-10-12T16:59:59Z'))).toBe('2026-10-12');
+  });
+
+  it('rolls over to the next day at Bangkok midnight (UTC+7)', () => {
+    expect(bangkokDateKey(new Date('2026-10-12T17:00:00Z'))).toBe('2026-10-13');
   });
 });

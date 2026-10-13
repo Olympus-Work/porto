@@ -19,6 +19,13 @@ export interface NetWorthSummary {
   fx: number;
 }
 
+// Snapshot days roll over at Bangkok midnight, matching the daily cron.
+export function bangkokDateKey(d: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(
+    d,
+  );
+}
+
 @Injectable()
 export class NetWorthService {
   private readonly logger = new Logger(NetWorthService.name);
@@ -178,7 +185,7 @@ export class NetWorthService {
   async recordSnapshot(userId: string): Promise<NetWorthHistory> {
     this.logger.log(`Recording net-worth snapshot for user=${userId}`);
     const summary = await this.getSummary(userId);
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = bangkokDateKey();
 
     let history = await this.netWorthHistoryRepo.findOne({
       where: { userId, date: todayStr },

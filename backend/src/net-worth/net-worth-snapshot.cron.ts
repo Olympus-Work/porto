@@ -17,7 +17,8 @@ export class NetWorthSnapshotCron {
   ) {}
 
   // Snapshots otherwise only get recorded when the user presses Refresh, so the net-worth chart had no history.
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // Runs at Bangkok midnight so the date key matches bangkokDateKey().
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: 'Asia/Bangkok' })
   async recordDailySnapshots(): Promise<void> {
     const users = await this.userRepository.find({
       where: { isDemo: false },
