@@ -156,9 +156,9 @@ const ConsistencyCard: React.FC<{
   );
 };
 
-const NW_RANGES = ['1M', '3M', '1Y', 'ALL'] as const;
-type NetWorthRange = (typeof NW_RANGES)[number];
-const NW_RANGE_DAYS: Record<NetWorthRange, number | null> = { '1M': 30, '3M': 90, '1Y': 365, ALL: null };
+const GROWTH_RANGES = ['1M', '3M', '1Y', 'ALL'] as const;
+type GrowthRange = (typeof GROWTH_RANGES)[number];
+const GROWTH_RANGE_DAYS: Record<GrowthRange, number | null> = { '1M': 30, '3M': 90, '1Y': 365, ALL: null };
 // Local-time YYYY-MM-DD — snapshot dates are local, so a UTC-based toISOString()
 // cutoff would include/exclude boundary points a day early/late in UTC+7.
 const ymd = (d: Date) =>
@@ -173,7 +173,7 @@ export const Overview: React.FC = () => {
   // Full history (no `days`) so the chart can reach back to the first snapshot;
   // the range selector below filters it client-side.
   const { summary, history } = useNetWorth();
-  const [nwRange, setNwRange] = React.useState<NetWorthRange>('ALL');
+  const [growthRange, setGrowthRange] = React.useState<GrowthRange>('ALL');
   const { data: config } = useAuthConfig();
   const { t, language } = useTranslation();
   const themeColors = useThemePalette();
@@ -283,20 +283,20 @@ export const Overview: React.FC = () => {
   }
 
   // 3. Historical Area Chart (custom SVG)
-  let nwLinePath = '';
-  let nwAreaPath = '';
-  let nwDotX = 0;
-  let nwDotY = 0;
+  let growthLinePath = '';
+  let growthAreaPath = '';
+  let growthDotX = 0;
+  let growthDotY = 0;
   const xLabels: string[] = [];
   let rangePct: number | null = null;
 
   let chartHistoryPoints: NetWorthHistoryItem[] = historyData;
-  const rangeDays = NW_RANGE_DAYS[nwRange];
+  const rangeDays = GROWTH_RANGE_DAYS[growthRange];
   if (rangeDays !== null) {
     const cutoffStr = ymd(new Date(now - rangeDays * 86400000));
     const inRange = historyData.filter((p) => p.date >= cutoffStr);
     const anchor = historyData.findLast((p) => p.date < cutoffStr);
-    // Net worth carries forward from the last snapshot before the range, so the line starts at the range edge.
+    // Values carry forward from the last snapshot before the range, so the line starts at the range edge.
     if (anchor && (inRange.length === 0 || inRange[0].date > cutoffStr)) {
       chartHistoryPoints = [{ ...anchor, date: cutoffStr }, ...inRange];
     } else {
@@ -346,10 +346,10 @@ export const Overview: React.FC = () => {
       return [x, y];
     });
 
-    nwLinePath = `M${points.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L')}`;
-    nwAreaPath = `${nwLinePath} L${width},${height} L0,${height} Z`;
-    nwDotX = points[points.length - 1][0];
-    nwDotY = points[points.length - 1][1];
+    growthLinePath = `M${points.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L')}`;
+    growthAreaPath = `${growthLinePath} L${width},${height} L0,${height} Z`;
+    growthDotX = points[points.length - 1][0];
+    growthDotY = points[points.length - 1][1];
 
     // Labels are evenly spaced in time to match the date-based x axis. Short
     // spans show day + month so the labels don't all repeat the same month.
@@ -794,13 +794,13 @@ export const Overview: React.FC = () => {
         ) : (
         <>
           <div className="flex gap-[6px] mb-3 select-none">
-            {NW_RANGES.map((r) => (
+            {GROWTH_RANGES.map((r) => (
               <button
                 key={r}
-                onClick={() => setNwRange(r)}
-                aria-pressed={nwRange === r}
+                onClick={() => setGrowthRange(r)}
+                aria-pressed={growthRange === r}
                 className={`px-[14px] py-[5px] rounded-full cursor-pointer text-[12.5px] font-bold border-none transition-colors duration-150 ${
-                  nwRange === r ? 'bg-dark text-surface shadow-sm' : 'bg-chipBg text-muted hover:bg-softH'
+                  growthRange === r ? 'bg-dark text-surface shadow-sm' : 'bg-chipBg text-muted hover:bg-softH'
                 }`}
               >
                 {r === 'ALL' ? t('overview.rangeAll') : r}
@@ -811,7 +811,7 @@ export const Overview: React.FC = () => {
           <>
           <svg viewBox="0 0 1100 170" className="w-full max-h-[170px] select-none block overflow-visible">
             <defs>
-              <linearGradient id="nw-area" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="growth-area" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" style={{ stopColor: 'var(--brand)', stopOpacity: 0.32 }}></stop>
                 <stop offset="1" style={{ stopColor: 'var(--brand)', stopOpacity: 0 }}></stop>
               </linearGradient>
@@ -820,9 +820,9 @@ export const Overview: React.FC = () => {
             {[34, 85, 136].map((y) => (
               <line key={y} x1="0" y1={y} x2="1100" y2={y} stroke="var(--soft)" strokeWidth="1.5" />
             ))}
-            <path d={nwAreaPath} fill="url(#nw-area)"></path>
-            <path d={nwLinePath} fill="none" stroke="var(--brand)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"></path>
-            <circle cx={nwDotX} cy={nwDotY} r="5" fill="var(--brand)" stroke="var(--bg)" strokeWidth="3"></circle>
+            <path d={growthAreaPath} fill="url(#growth-area)"></path>
+            <path d={growthLinePath} fill="none" stroke="var(--brand)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"></path>
+            <circle cx={growthDotX} cy={growthDotY} r="5" fill="var(--brand)" stroke="var(--bg)" strokeWidth="3"></circle>
           </svg>
           <div className="w-full flex justify-between text-[12px] font-bold text-faint-darker px-1 mt-1.5 border-t border-inputBorder/20 pt-2">
             {xLabels.map((label, idx) => (
