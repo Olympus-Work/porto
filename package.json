@@ -1,6 +1,6 @@
 {
   "name": "porto-root",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Porto Net Worth & Investment Tracker Workspace",
   "engines": {
     "node": "24.x"
