@@ -316,7 +316,9 @@ export const Overview: React.FC = () => {
     // Header % reflects the selected range: first vs last point, in display currency.
     const first = values[0];
     const last = values[values.length - 1];
-    if (first > 0) rangePct = ((last - first) / first) * 100;
+    // Divide by |first| so a negative baseline still shows the right direction
+    // (e.g. -100 → -150 is ▼ 50%); only a zero baseline has no meaningful %.
+    if (first !== 0) rangePct = ((last - first) / Math.abs(first)) * 100;
     const min = Math.min(...values);
     const max = Math.max(...values);
     const pad = (max - min) * 0.15 || Math.abs(max) * 0.05 || 1;
