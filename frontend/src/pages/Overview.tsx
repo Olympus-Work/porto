@@ -265,7 +265,6 @@ export const Overview: React.FC = () => {
   // 2. Month-over-Month Net Worth Change
   let MoMChangeLabel = '—';
   let MoMChangeUp = true;
-  let MoMPct = 0;
   const historyData = history.data || [];
   if (historyData.length >= 2) {
     const dayMs = 86400000;
@@ -279,7 +278,6 @@ export const Overview: React.FC = () => {
     if (oldPoint && Number(oldPoint.netWorthThb) > 0) {
       const pct = ((netWorth - Number(oldPoint.netWorthThb)) / Number(oldPoint.netWorthThb)) * 100;
       MoMChangeUp = pct >= 0;
-      MoMPct = pct;
       MoMChangeLabel = `${pct >= 0 ? '▲ +' : '▼ -'}${Math.abs(pct).toFixed(1)}% ${t('overview.monthAbbr')}`;
     }
   }
@@ -290,6 +288,7 @@ export const Overview: React.FC = () => {
   let nwDotX = 0;
   let nwDotY = 0;
   const xLabels: string[] = [];
+  let rangePct = 0;
 
   let chartHistoryPoints: NetWorthHistoryItem[] = historyData;
   const rangeDays = NW_RANGE_DAYS[nwRange];
@@ -314,6 +313,10 @@ export const Overview: React.FC = () => {
       const pointFx = h.fxRate || fx;
       return isThb ? Number(h.netWorthThb) : Number(h.netWorthThb) / pointFx;
     });
+    // Header % reflects the selected range: first vs last point, in display currency.
+    const first = values[0];
+    const last = values[values.length - 1];
+    if (first > 0) rangePct = ((last - first) / first) * 100;
     const min = Math.min(...values);
     const max = Math.max(...values);
     const pad = (max - min) * 0.15 || Math.abs(max) * 0.05 || 1;
@@ -776,11 +779,11 @@ export const Overview: React.FC = () => {
       <div className="bg-white rounded-[20px] p-[20px_24px] border border-inputBorder/20 shadow-sm mt-6 w-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[14px] font-bold text-dark">{t('overview.netWorthGrowth')}</h3>
-          {hasHistory && (
+          {hasChart && (
             <span
-              className={`text-sm font-bold ${MoMChangeUp ? 'text-positive-text' : 'text-negative-text'}`}
+              className={`text-sm font-bold ${rangePct >= 0 ? 'text-positive-text' : 'text-negative-text'}`}
             >
-              {MoMPct >= 0 ? '▲' : '▼'} {Math.abs(MoMPct).toFixed(1)}%
+              {rangePct >= 0 ? '▲' : '▼'} {Math.abs(rangePct).toFixed(1)}%
             </span>
           )}
         </div>
