@@ -311,7 +311,7 @@ export const Overview: React.FC = () => {
   if (hasChart) {
     const values = chartHistoryPoints.map((h) => {
       const pointFx = h.fxRate || fx;
-      return isThb ? Number(h.netWorthThb) : Number(h.netWorthThb) / pointFx;
+      return isThb ? Number(h.totalAssetsThb) : Number(h.totalAssetsThb) / pointFx;
     });
     // Header % reflects the selected range: first vs last point, in display currency.
     const first = values[0];
@@ -338,7 +338,7 @@ export const Overview: React.FC = () => {
 
     const points = chartHistoryPoints.map((h, i) => {
       const pointFx = h.fxRate || fx;
-      const val = isThb ? Number(h.netWorthThb) : Number(h.netWorthThb) / pointFx;
+      const val = isThb ? Number(h.totalAssetsThb) : Number(h.totalAssetsThb) / pointFx;
       const x = span > 0
         ? ((times[i] - firstTime) / span) * width
         : i * (width / (chartHistoryPoints.length - 1));
@@ -777,10 +777,10 @@ export const Overview: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Net Worth Area Chart */}
+      {/* 3. Total Assets Area Chart (excludes liabilities) */}
       <div className="bg-white rounded-[20px] p-[20px_24px] border border-inputBorder/20 shadow-sm mt-6 w-full">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-bold text-dark">{t('overview.netWorthGrowth')}</h3>
+          <h3 className="text-[14px] font-bold text-dark">{t('overview.assetGrowth')}</h3>
           {hasChart && rangePct !== null && (
             <span
               className={`text-sm font-bold ${rangePct >= 0 ? 'text-positive-text' : 'text-negative-text'}`}
