@@ -109,7 +109,7 @@ export const translations: TranslationTree = {
     itemsCount: { th: 'รายการ', en: 'items' },
     portsCount: { th: 'พอร์ต', en: 'portfolios' },
     loadingOverview: { th: 'กำลังโหลดข้อมูลภาพรวม…', en: 'Loading overview data...' },
-    netWorthGrowth: { th: 'การเติบโตของ Net Worth', en: 'Net Worth Growth' },
+    assetGrowth: { th: 'การเติบโตของสินทรัพย์', en: 'Asset Growth' },
     rangeAll: { th: 'ทั้งหมด', en: 'All' },
     typeAllocation: { th: 'สัดส่วนตามประเภทสินทรัพย์', en: 'Allocation by Asset Type' },
     topMovers: { th: 'Top Movers วันนี้', en: "Today's Top Movers" },
