@@ -288,7 +288,7 @@ export const Overview: React.FC = () => {
   let nwDotX = 0;
   let nwDotY = 0;
   const xLabels: string[] = [];
-  let rangePct = 0;
+  let rangePct: number | null = null;
 
   let chartHistoryPoints: NetWorthHistoryItem[] = historyData;
   const rangeDays = NW_RANGE_DAYS[nwRange];
@@ -779,7 +779,7 @@ export const Overview: React.FC = () => {
       <div className="bg-white rounded-[20px] p-[20px_24px] border border-inputBorder/20 shadow-sm mt-6 w-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[14px] font-bold text-dark">{t('overview.netWorthGrowth')}</h3>
-          {hasChart && (
+          {hasChart && rangePct !== null && (
             <span
               className={`text-sm font-bold ${rangePct >= 0 ? 'text-positive-text' : 'text-negative-text'}`}
             >
